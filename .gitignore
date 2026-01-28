@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+
+# Env
+.env
+APIS.TXT
+
+# macOS
+.DS_Store
+
+# App outputs
+tracklist.txt
+test_output/
+
+# Logs
+*.log

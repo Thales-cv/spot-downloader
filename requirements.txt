@@ -1,0 +1,5 @@
+spotdl
+customtkinter
+python-dotenv
+openai
+Pillow
