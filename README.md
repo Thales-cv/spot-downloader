@@ -1,4 +1,7 @@
 # spot-downloader
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Repo](https://img.shields.io/badge/repo-GitHub-black.svg)](https://github.com/Thales-cv/spot-downloader)
 
 GUI em Python para baixar playlists do Spotify em MP3 usando o spotdl, com organização por gênero e otimização opcional via OpenAI.
 
