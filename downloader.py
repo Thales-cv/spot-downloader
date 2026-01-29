@@ -19,6 +19,14 @@ class SpotifyDownloader:
         Main execution flow.
         """
         app_instance.log(f"Starting process for: {url}")
+
+        if not (Config.SPOTIFY_CLIENT_ID and Config.SPOTIFY_CLIENT_SECRET):
+            app_instance.log(
+                "[Error] Credenciais do Spotify ausentes. "
+                "Preencha SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET no .env."
+            )
+            app_instance.download_finished()
+            return
         
         # fix: spotdl requires an event loop in the thread
         loop = asyncio.new_event_loop()
