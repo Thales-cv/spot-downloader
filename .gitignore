@@ -19,3 +19,6 @@ test_output/
 
 # Logs
 *.log
+
+# GitHub CLI auth (kept local only)
+.gh/
