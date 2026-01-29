@@ -52,7 +52,11 @@ class SpotifyDownloader:
 
             app_instance.log(f"Found {len(songs)} songs.")
 
-            # 2. Save Tracklist
+            # 2. Ask storage mode (AI assistant prompt handled by UI)
+            storage_mode = app_instance.request_storage_mode(len(songs))
+            app_instance.log(f"Storage mode selected: {storage_mode}")
+
+            # 3. Save Tracklist
             tracklist_path = os.path.join(output_folder, "tracklist.txt")
             with open(tracklist_path, "w", encoding="utf-8") as f:
                 f.write(f"Source: {url}\n")
@@ -61,7 +65,7 @@ class SpotifyDownloader:
                     f.write(f"{i}. {song.artist} - {song.name}\n")
             app_instance.log(f"Tracklist saved to: {tracklist_path}")
 
-            # 3. Download Loop
+            # 4. Download Loop
             spotdl.downloader.output = os.path.join(output_folder, "{artist} - {title}.{output-ext}")
             
             for i, song in enumerate(songs, 1):
@@ -149,27 +153,37 @@ class SpotifyDownloader:
                         app_instance.log(f"  > Downloaded: {filename}")
                         
                         # ORGANIZING
-                        genre = "Unsorted"
-                        if use_ai and self.ai.enabled:
-                            app_instance.log(f"  > AI identifying genre...")
-                            genre = self.ai.detect_genre(song.artist, song.name)
-                            app_instance.log(f"  > Genre detected: {genre}")
-                        
-                        # Create Genre Folder
-                        genre_folder = os.path.join(output_folder, genre)
-                        if not os.path.exists(genre_folder):
-                            os.makedirs(genre_folder)
+                        if storage_mode == "set":
+                            moment = "Set"
+                            if use_ai and self.ai.enabled:
+                                app_instance.log("  > AI identifying set moment...")
+                                moment = self.ai.detect_set_moment(song.artist, song.name)
+                                app_instance.log(f"  > Set moment detected: {moment}")
+
+                            target_folder = os.path.join(output_folder, moment)
+                        else:
+                            genre = "Unsorted"
+                            if use_ai and self.ai.enabled:
+                                app_instance.log("  > AI identifying genre...")
+                                genre = self.ai.detect_genre(song.artist, song.name)
+                                app_instance.log(f"  > Genre detected: {genre}")
+
+                            target_folder = os.path.join(output_folder, genre)
+
+                        if not os.path.exists(target_folder):
+                            os.makedirs(target_folder)
                             
                         # Move File
-                        new_path = os.path.join(genre_folder, filename)
+                        new_path = os.path.join(target_folder, filename)
                         try:
                             # If file exists, rename
                             if os.path.exists(new_path):
                                 base, ext = os.path.splitext(filename)
-                                new_path = os.path.join(genre_folder, f"{base}_{int(time.time())}{ext}")
+                                new_path = os.path.join(target_folder, f"{base}_{int(time.time())}{ext}")
                                 
                             os.rename(file_path, new_path)
-                            app_instance.log(f"  > Organized to: {genre}/{os.path.basename(new_path)}")
+                            folder_name = os.path.basename(target_folder)
+                            app_instance.log(f"  > Organized to: {folder_name}/{os.path.basename(new_path)}")
                         except Exception as move_err:
                             app_instance.log(f"  > Failed to move file: {move_err}")
 
@@ -205,7 +219,7 @@ class SpotifyDownloader:
                         return True, os.path.join(root, file)
         return False, None
 
-    def organize_existing(self, output_folder, app_instance, use_ai):
+    def organize_existing(self, output_folder, app_instance, use_ai, storage_mode="genre"):
         """
         Scans the root output folder for MP3s and moves them to genre folders.
         """
@@ -245,25 +259,31 @@ class SpotifyDownloader:
                 title = name_part
                 
             # Detect Genre
-            genre = "Unsorted"
-            if use_ai and self.ai.enabled:
-                genre = self.ai.detect_genre(artist, title)
-            
+            if storage_mode == "set":
+                moment = "Set"
+                if use_ai and self.ai.enabled:
+                    moment = self.ai.detect_set_moment(artist, title)
+                target_folder = os.path.join(output_folder, moment)
+            else:
+                genre = "Unsorted"
+                if use_ai and self.ai.enabled:
+                    genre = self.ai.detect_genre(artist, title)
+                target_folder = os.path.join(output_folder, genre)
+
             # Move
-            genre_folder = os.path.join(output_folder, genre)
-            if not os.path.exists(genre_folder):
-                os.makedirs(genre_folder)
+            if not os.path.exists(target_folder):
+                os.makedirs(target_folder)
                 
-            new_path = os.path.join(genre_folder, filename)
+            new_path = os.path.join(target_folder, filename)
             
             try:
                 if os.path.exists(new_path):
                     # Handle Duplicate
                     base, ext = os.path.splitext(filename)
-                    new_path = os.path.join(genre_folder, f"{base}_{int(time.time())}{ext}")
+                    new_path = os.path.join(target_folder, f"{base}_{int(time.time())}{ext}")
                     
                 os.rename(file_path, new_path)
-                app_instance.log(f"  > Moved to: {genre}/")
+                app_instance.log(f"  > Moved to: {os.path.basename(target_folder)}/")
             except Exception as e:
                 app_instance.log(f"  > Failed to move: {e}")
                 

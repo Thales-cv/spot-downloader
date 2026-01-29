@@ -11,6 +11,7 @@ GUI em Python para baixar playlists do Spotify em MP3 usando o spotdl, com organ
 - Gera `tracklist.txt` com as faixas
 - Deduplicação por arquivo existente
 - Organização por gênero (opcional, usando OpenAI)
+- Assistente de IA guia o fluxo e pergunta o tipo de organização (gênero ou momentos do SET)
 - Interface gráfica com customtkinter
 
 ## Requisitos

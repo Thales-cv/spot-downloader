@@ -1,9 +1,11 @@
 from ui import App
 from downloader import SpotifyDownloader
 from config import Config
+from assistant import AIAssistant
 
 # Global instance to prevent re-initialization error
 downloader = None
+assistant = AIAssistant()
 
 def get_downloader():
     global downloader
@@ -38,8 +40,9 @@ def start_organize_bridge(folder, use_ai, app_instance):
             return
             
     dl = get_downloader()
-    dl.organize_existing(folder, app_instance, use_ai)
+    storage_mode = app_instance.request_storage_mode(None)
+    dl.organize_existing(folder, app_instance, use_ai, storage_mode)
 
 if __name__ == "__main__":
-    app = App(start_download_bridge, start_organize_bridge)
+    app = App(start_download_bridge, start_organize_bridge, assistant=assistant)
     app.mainloop()

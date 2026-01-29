@@ -4,10 +4,13 @@ import threading
 from config import Config
 
 class App(ctk.CTk):
-    def __init__(self, start_download_callback, organize_callback):
+    def __init__(self, start_download_callback, organize_callback, assistant=None):
         super().__init__()
         self.start_download_callback = start_download_callback
         self.organize_callback = organize_callback
+        self.assistant = assistant
+        self.storage_mode_var = ctk.StringVar(value="")
+        self.storage_mode_event = threading.Event()
 
         # Window Setup
         self.title(Config.APP_NAME)
@@ -16,9 +19,11 @@ class App(ctk.CTk):
         ctk.set_default_color_theme(Config.THEME_COLOR)
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)  # Log area expands
+        self.grid_rowconfigure(7, weight=1)  # Log area expands
 
         self.setup_ui()
+        if self.assistant:
+            self.ai_message(self.assistant.initial_message())
 
     def setup_ui(self):
         # Header
@@ -53,12 +58,36 @@ class App(ctk.CTk):
 
         # Organize Button
         self.btn_organize = ctk.CTkButton(self, text="Organize Existing Files", command=self.on_organize, fg_color="gray", width=200)
-        self.btn_organize.grid(row=5, column=0, padx=20, pady=(0, 20))
+        self.btn_organize.grid(row=6, column=0, padx=20, pady=(0, 20))
 
         # Log Console
         self.textbox_log = ctk.CTkTextbox(self, width=700, font=("Consolas", 12))
-        self.textbox_log.grid(row=6, column=0, padx=20, pady=(0, 20), sticky="nsew")
+        self.textbox_log.grid(row=7, column=0, padx=20, pady=(0, 20), sticky="nsew")
         self.log("Ready to download.")
+
+        # Storage Mode
+        self.frame_storage = ctk.CTkFrame(self, fg_color="transparent")
+        self.frame_storage.grid(row=5, column=0, padx=20, pady=(0, 10))
+
+        self.label_storage = ctk.CTkLabel(self.frame_storage, text="Armazenamento das músicas:")
+        self.label_storage.pack(side="left", padx=(0, 10))
+
+        self.radio_genre = ctk.CTkRadioButton(
+            self.frame_storage, text="Por gênero", value="genre", variable=self.storage_mode_var
+        )
+        self.radio_genre.pack(side="left", padx=(0, 10))
+
+        self.radio_set = ctk.CTkRadioButton(
+            self.frame_storage, text="Por momentos do SET", value="set", variable=self.storage_mode_var
+        )
+        self.radio_set.pack(side="left", padx=(0, 10))
+
+        self.btn_confirm_storage = ctk.CTkButton(
+            self.frame_storage, text="Confirmar", command=self.on_confirm_storage, width=120
+        )
+        self.btn_confirm_storage.pack(side="left")
+
+        self._set_storage_controls_state("disabled")
 
     def browse_folder(self):
         folder = filedialog.askdirectory()
@@ -69,6 +98,14 @@ class App(ctk.CTk):
     def log(self, message):
         self.textbox_log.insert("end", f"{message}\n")
         self.textbox_log.see("end")
+
+    def ai_message(self, message):
+        self.log(f"[AI] {message}")
+
+    def _set_storage_controls_state(self, state):
+        self.radio_genre.configure(state=state)
+        self.radio_set.configure(state=state)
+        self.btn_confirm_storage.configure(state=state)
 
     def on_start(self):
         url = self.entry_url.get().strip()
@@ -81,6 +118,11 @@ class App(ctk.CTk):
         if not folder:
             self.log("[Error] Please select an output folder.")
             return
+
+        if self.assistant:
+            self.assistant.user_message(f"Playlist URL: {url}")
+            self.assistant.add_event("user", f"Output folder: {folder}")
+            self.assistant.add_event("user", f"Smart Search: {'on' if use_ai else 'off'}")
 
         self.btn_start.configure(state="disabled", text="Downloading...")
         
@@ -101,6 +143,37 @@ class App(ctk.CTk):
         
         thread = threading.Thread(target=self.organize_callback, args=(folder, use_ai, self))
         thread.start()
+
+    def on_confirm_storage(self):
+        if not self.storage_mode_var.get():
+            self.log("[Error] Selecione uma forma de armazenamento.")
+            return
+        self._set_storage_controls_state("disabled")
+        if self.assistant:
+            choice = "gênero" if self.storage_mode_var.get() == "genre" else "momentos do SET"
+            self.assistant.add_event("user", f"Storage mode: {choice}")
+        self.storage_mode_event.set()
+
+    def request_storage_mode(self, total_songs=None):
+        self.storage_mode_event.clear()
+        self.storage_mode_var.set("")
+
+        def _prompt():
+            if self.assistant:
+                self.ai_message(self.assistant.ask_storage_mode(total_songs))
+            else:
+                if total_songs is None:
+                    self.ai_message("Como você quer armazenar as músicas?")
+                else:
+                    self.ai_message(
+                        f"Encontrei {total_songs} músicas. "
+                        "Como você quer armazenar as músicas?"
+                    )
+            self._set_storage_controls_state("normal")
+
+        self.after(0, _prompt)
+        self.storage_mode_event.wait()
+        return self.storage_mode_var.get() or "genre"
 
     def download_finished(self):
         self.btn_start.configure(state="normal", text="Start Download")

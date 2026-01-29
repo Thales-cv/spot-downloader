@@ -88,6 +88,41 @@ class AIOptimizer:
         if not self.enabled:
             return "Unsorted"
 
+    def detect_set_moment(self, artist, title):
+        """
+        Classifica a faixa em um momento do set.
+        """
+        if not self.enabled:
+            return "Set"
+
+        try:
+            prompt = (
+                f"Classifique a faixa '{artist} - {title}' em UM destes momentos do set: "
+                "Warmup, Build-up, Peak Time, Breakdown, Closing, Other. "
+                "Retorne SOMENTE o nome do momento."
+            )
+
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=5,
+                temperature=0.0,
+            )
+
+            moment = response.choices[0].message.content.strip().title()
+            valid = ["Warmup", "Build-Up", "Peak Time", "Breakdown", "Closing", "Other"]
+
+            # Normalize "Build-up"
+            if moment == "Build-Up":
+                moment = "Build-up"
+
+            if moment not in ["Warmup", "Build-up", "Peak Time", "Breakdown", "Closing", "Other"]:
+                return "Other"
+            return moment
+
+        except Exception as e:
+            logging.error(f"AI Set Moment Error: {e}")
+            return "Set"
         try:
             prompt = (
                 f"Categorize the song '{artist} - {title}' into ONE of these genres: "
@@ -114,4 +149,3 @@ class AIOptimizer:
         except Exception as e:
             logging.error(f"AI Genre Error: {e}")
             return "Unsorted"
-
