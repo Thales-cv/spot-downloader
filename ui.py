@@ -32,6 +32,8 @@ class App(ctk.CTk):
         self.setup_ui()
         if self.assistant:
             self.ai_message(self.assistant.initial_message())
+        if not (Config.SPOTIFY_CLIENT_ID and Config.SPOTIFY_CLIENT_SECRET):
+            self.log("[AI] Configure SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET no .env para baixar playlists.")
 
     def setup_ui(self):
         # Header
