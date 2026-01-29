@@ -65,6 +65,19 @@ class App(ctk.CTk):
         self.textbox_log.grid(row=7, column=0, padx=20, pady=(0, 20), sticky="nsew")
         self.log("Ready to download.")
 
+        # Chat Input
+        self.frame_chat = ctk.CTkFrame(self, fg_color="transparent")
+        self.frame_chat.grid(row=8, column=0, padx=20, pady=(0, 20), sticky="ew")
+        self.frame_chat.grid_columnconfigure(0, weight=1)
+
+        self.entry_chat = ctk.CTkEntry(self.frame_chat, placeholder_text="Fale com a assistente...", width=500)
+        self.entry_chat.grid(row=0, column=0, padx=(0, 10), sticky="ew")
+
+        self.btn_send = ctk.CTkButton(self.frame_chat, text="Enviar", command=self.on_send_chat, width=120)
+        self.btn_send.grid(row=0, column=1)
+
+        self.entry_chat.bind("<Return>", lambda _e: self.on_send_chat())
+
         # Storage Mode
         self.frame_storage = ctk.CTkFrame(self, fg_color="transparent")
         self.frame_storage.grid(row=5, column=0, padx=20, pady=(0, 10))
@@ -174,6 +187,18 @@ class App(ctk.CTk):
         self.after(0, _prompt)
         self.storage_mode_event.wait()
         return self.storage_mode_var.get() or "genre"
+
+    def on_send_chat(self):
+        text = self.entry_chat.get().strip()
+        if not text:
+            return
+        self.entry_chat.delete(0, "end")
+        self.log(f"[You] {text}")
+        if self.assistant:
+            reply = self.assistant.respond(text)
+            self.ai_message(reply)
+        else:
+            self.log("[AI] Assistente indisponível.")
 
     def download_finished(self):
         self.btn_start.configure(state="normal", text="Start Download")

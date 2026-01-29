@@ -64,3 +64,27 @@ class AIAssistant:
 
     def user_message(self, text):
         self.add_event("user", text)
+
+    def respond(self, text):
+        self.add_event("user", text)
+        if not self.enabled:
+            msg = "Posso ajudar a organizar seu set: cole a playlist e escolha o tipo de organização."
+            self.add_event("assistant", msg)
+            return msg
+
+        try:
+            messages = [{"role": "system", "content": "Você é uma assistente de DJ objetiva."}]
+            messages.extend(self.history)
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                max_tokens=120,
+                temperature=0.4,
+            )
+            msg = response.choices[0].message.content.strip()
+            self.add_event("assistant", msg)
+            return msg
+        except Exception:
+            msg = "Tive um problema para responder agora. Tente novamente."
+            self.add_event("assistant", msg)
+            return msg
