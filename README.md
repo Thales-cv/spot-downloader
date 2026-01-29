@@ -2,6 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Repo](https://img.shields.io/badge/repo-GitHub-black.svg)](https://github.com/Thales-cv/spot-downloader)
+[![CI](https://github.com/Thales-cv/spot-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Thales-cv/spot-downloader/actions/workflows/ci.yml)
 
 GUI em Python para baixar playlists do Spotify em MP3 usando o spotdl, com organização por gênero e otimização opcional via OpenAI.
 
@@ -17,9 +18,17 @@ GUI em Python para baixar playlists do Spotify em MP3 usando o spotdl, com organ
 - FFmpeg instalado e disponível no PATH
 
 ## Instalação
+### macOS / Linux
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Windows (PowerShell)
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
@@ -49,3 +58,6 @@ Cole a URL da playlist, escolha a pasta de saída e inicie o download.
 ## Observações
 - O uso de OpenAI é opcional; sem chave, o app funciona normalmente.
 - O spotdl faz o matching com base nos metadados do Spotify.
+
+## Changelog
+Veja o histórico em `CHANGELOG.md`.
