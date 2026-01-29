@@ -51,6 +51,10 @@ class SpotifyDownloader:
                 return
 
             app_instance.log(f"Found {len(songs)} songs.")
+            try:
+                app_instance.show_playlist(songs)
+            except Exception:
+                pass
 
             # 2. Ask storage mode (AI assistant prompt handled by UI)
             storage_mode = app_instance.request_storage_mode(len(songs))
