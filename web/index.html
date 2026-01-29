@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>spot-downloader</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #11161c;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #22c55e;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #0f172a 0%, #0b0f14 60%);
+      color: var(--text);
+    }
+    .wrap {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+    .log {
+      height: calc(100vh - 200px);
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #0b1117;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .input {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b1117;
+      color: var(--text);
+    }
+    button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--accent);
+      color: #0b0f14;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .playlist {
+      height: calc(100vh - 120px);
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #0b1117;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+    .count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 900px) {
+      .wrap { grid-template-columns: 1fr; }
+      .log, .playlist { height: 40vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <h1>Chat do DJ</h1>
+      <div id="log" class="log"></div>
+      <div class="input">
+        <input id="message" placeholder="Cole a playlist do Spotify ou fale com a assistente..." />
+        <button id="send">Enviar</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h1>Playlist <span id="count" class="count">0 músicas</span></h1>
+      <div id="playlist" class="playlist">Aguardando playlist...</div>
+    </div>
+  </div>
+
+  <script>
+    let cursor = 0;
+    const logEl = document.getElementById('log');
+    const playlistEl = document.getElementById('playlist');
+    const countEl = document.getElementById('count');
+    const input = document.getElementById('message');
+    const sendBtn = document.getElementById('send');
+
+    async function poll() {
+      const res = await fetch(`/api/poll?since=${cursor}`);
+      const data = await res.json();
+      cursor = data.next;
+      if (data.logs && data.logs.length) {
+        for (const line of data.logs) {
+          const div = document.createElement('div');
+          div.textContent = line;
+          logEl.appendChild(div);
+        }
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (Array.isArray(data.playlist)) {
+        playlistEl.textContent = data.playlist.length ? data.playlist.map((s, i) => `${i+1}. ${s}`).join('\n') : 'Aguardando playlist...';
+      }
+      if (typeof data.count === 'number') {
+        countEl.textContent = `${data.count} músicas`;
+      }
+    }
+
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      await fetch('/api/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      await poll();
+    }
+
+    sendBtn.addEventListener('click', send);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') send();
+    });
+
+    setInterval(poll, 1200);
+    poll();
+  </script>
+</body>
+</html>

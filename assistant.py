@@ -15,7 +15,7 @@ class AIAssistant:
             self.history = self.history[-30:]
 
     def initial_message(self):
-        msg = "Cole aqui a sua playlist do spotfy"
+        msg = "Cole aqui a sua playlist do Spotify"
         self.add_event("assistant", msg)
         return msg
 

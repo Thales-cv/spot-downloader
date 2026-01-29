@@ -56,6 +56,18 @@ python main.py
 
 Cole a URL da playlist, escolha a pasta de saída e inicie o download.
 
+## Web (chat)
+Para rodar como página web (chat + painel de playlist), use o servidor local:
+```bash
+pip install -r requirements.txt
+uvicorn webapp:app --reload
+```
+Depois acesse `http://localhost:8000`.
+
+### Segurança das chaves
+- As chaves ficam **somente no servidor** via `.env` e nunca vão para o browser.
+- Não exponha `OPENAI_API_KEY`, `SPOTIFY_CLIENT_ID` e `SPOTIFY_CLIENT_SECRET` no frontend.
+
 ## Observações
 - O uso de OpenAI é opcional; sem chave, o app funciona normalmente.
 - O spotdl faz o matching com base nos metadados do Spotify.

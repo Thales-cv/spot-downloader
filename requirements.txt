@@ -3,3 +3,5 @@ customtkinter
 python-dotenv
 openai
 Pillow
+fastapi
+uvicorn
